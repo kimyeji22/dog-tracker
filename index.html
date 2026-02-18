@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>호두 & 보리 기록장</title>
+    <style>
+        body { 
+            font-family: 'Pretendard', sans-serif; 
+            background-color: #fdf6e3; 
+            margin: 0; padding: 20px;
+            display: flex; justify-content: center;
+        }
+        .container { 
+            background: white; padding: 30px 20px; 
+            border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            width: 100%; max-width: 400px;
+        }
+        h1 { color: #d4a373; font-size: 1.5rem; margin-bottom: 25px; text-align: center; }
+        .dog-section { 
+            background: #fefae0; border-radius: 15px; 
+            padding: 20px; margin-bottom: 25px; text-align: left;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.03);
+        }
+        .dog-name { font-weight: bold; font-size: 1.3rem; color: #8c6239; display: flex; align-items: center; }
+        .poodle-icon { font-size: 1.8rem; margin-right: 8px; }
+        .current-weight { font-size: 0.95rem; color: #bc6c25; margin: 5px 0 15px 0; padding-left: 40px;}
+        
+        .input-group { display: flex; gap: 10px; padding-left: 5px; }
+        input { 
+            flex-grow: 1; padding: 10px; border: 2px solid #eed7a1; border-radius: 10px; outline: none;
+        }
+        input:focus { border-color: #d4a373; }
+        button { 
+            padding: 10px 15px; background: #d4a373; color: white; font-weight: bold;
+            border: none; border-radius: 10px; cursor: pointer; white-space: nowrap;
+        }
+        button:hover { background: #c38e5e; }
+        
+        .history { 
+            margin-top: 20px; font-size: 0.9rem; color: #555; 
+            max-height: 150px; overflow-y: auto; 
+            border-top: 2px dashed #eed7a1;
+            padding-top: 15px;
+        }
+        .history-title { font-weight: bold; color: #8c6239; margin-bottom: 10px; display: block;}
+        .history-item { 
+            display: flex; justify-content: space-between;
+            padding: 8px 0; border-bottom: 1px solid #f0e6d2;
+        }
+        .weight-highlight { color: #d4a373; font-weight: bold; }
+/* 삭제 버튼 스타일 */
+        .delete-btn { 
+            background: none; border: none; cursor: pointer; 
+            font-size: 0.8rem; padding: 0 5px; color: #ff8e8e;
+        }
+        .delete-btn:hover { transform: scale(1.2); } /* 마우스 올리면 살짝 커짐 */    
+</style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🐾 반려견 몸무게 기록장</h1>
+
+        <div class="dog-section">
+            <div class="dog-name">
+    <img src="hodu.png" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; margin-right: 8px; border: 2px solid #eed7a1;">
+    호두 (토이푸들)
+</div>
+            <div class="current-weight">✨ 현재 목표: 2.3kg 내외</div>
+            <div class="input-group">
+                <input type="number" id="hoduInput" step="0.1" placeholder="오늘 몸무게 (kg)">
+                <button onclick="addRecord('hodu')">기록하기</button>
+            </div>
+            <div class="history" id="hoduHistory">
+                <span class="history-title">📝 최근 기록:</span>
+                </div>
+        </div>
+
+        <div class="dog-section">
+            <div class="dog-name">
+    <img src="bori.png" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; margin-right: 8px; border: 2px solid #eed7a1;">
+    보리 (토이푸들)
+</div>
+            <div class="current-weight">✨ 현재 목표: 5.3kg 내외</div>
+            <div class="input-group">
+                <input type="number" id="boriInput" step="0.1" placeholder="오늘 몸무게 (kg)">
+                <button onclick="addRecord('bori')">기록하기</button>
+            </div>
+            <div class="history" id="boriHistory">
+                <span class="history-title">📝 최근 기록:</span>
+                </div>
+        </div>
+    </div>
+
+<script>
+        // 페이지가 열릴 때 저장된 기록 불러오기
+        window.onload = function() {
+            loadRecords('hodu');
+            loadRecords('bori');
+        };
+
+        // 새로운 기록 추가하기
+        function addRecord(dog) {
+            const input = document.getElementById(dog + 'Input');
+            const weight = input.value;
+            const date = new Date().toLocaleDateString();
+
+            if (weight === "") {
+                alert("몸무게를 입력해 주세요!");
+                return;
+            }
+
+            // 1. 로컬 스토리지에 먼저 저장
+            let records = JSON.parse(localStorage.getItem(dog + '_records')) || [];
+            records.unshift({ date: date, weight: weight }); // unshift: 배열 맨 앞에 추가
+            localStorage.setItem(dog + '_records', JSON.stringify(records));
+            
+            // 2. 입력창 비우고, 화면 새로고침
+            input.value = ""; 
+            loadRecords(dog); 
+        }
+
+        // *** 새로 추가된 삭제 기능 ***
+        function deleteRecord(dog, index) {
+            // 1. 저장된 기록 리스트 가져오기
+            let records = JSON.parse(localStorage.getItem(dog + '_records')) || [];
+            
+            // 2. splice 문법: index(몇 번째) 위치부터 1개를 삭제해라!
+            records.splice(index, 1); 
+            
+            // 3. 지워진 상태로 다시 로컬 스토리지에 저장
+            localStorage.setItem(dog + '_records', JSON.stringify(records));
+            
+            // 4. 화면 다시 그리기
+            loadRecords(dog);
+        }
+
+        // 화면에 기록들을 그려주는 기능 (수정됨)
+        function loadRecords(dog) {
+            const history = document.getElementById(dog + 'History');
+            let records = JSON.parse(localStorage.getItem(dog + '_records')) || [];
+            
+            // 핵심! 기존 화면에 있던 내용들을 싹 비우고 제목만 둡니다.
+            history.innerHTML = '<span class="history-title">📝 최근 기록:</span>';
+            
+            // forEach 문법: records 배열(리스트)을 하나씩 돌면서 화면에 요소를 만듭니다.
+            records.forEach(function(record, index) {
+                const recordItem = document.createElement('div');
+                recordItem.className = 'history-item';
+                
+                // 삭제 버튼(❌)을 추가하고, 누르면 deleteRecord 함수에 index(번호)를 넘겨줍니다.
+                recordItem.innerHTML = `
+                    <span>📅 ${record.date} <span class="weight-highlight">${record.weight}kg</span></span>
+                    <button class="delete-btn" onclick="deleteRecord('${dog}', ${index})">❌</button>
+                `;
+                
+                // 만들어진 한 줄을 화면에 쏙 붙입니다.
+                history.appendChild(recordItem);
+            });
+        }
+    </script>
+</body>
+</html>
