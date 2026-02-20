@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>호두 & 보리 기록장</title>
+    <style>
+      body {
+        font-family: "Pretendard", sans-serif;
+        background-color: #fdf6e3;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+      }
+      .container {
+        background: white;
+        padding: 30px 20px;
+        border-radius: 25px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        width: 100%;
+        max-width: 400px;
+      }
+      h1 {
+        color: #d4a373;
+        font-size: 1.5rem;
+        margin-bottom: 25px;
+        text-align: center;
+      }
+      .dog-section {
+        background: #fefae0;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.03);
+      }
+      .dog-name {
+        font-weight: bold;
+        font-size: 1.3rem;
+        color: #8c6239;
+        display: flex;
+        align-items: center;
+      }
+      .current-weight {
+        font-size: 0.95rem;
+        color: #bc6c25;
+        margin: 5px 0 15px 0;
+        padding-left: 43px;
+      }
+      .input-group {
+        display: flex;
+        gap: 10px;
+      }
+      input {
+        flex-grow: 1;
+        padding: 10px;
+        border: 2px solid #eed7a1;
+        border-radius: 10px;
+        outline: none;
+      }
+      button {
+        padding: 10px 15px;
+        background: #d4a373;
+        color: white;
+        font-weight: bold;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      .history {
+        margin-top: 20px;
+        font-size: 0.9rem;
+        color: #555;
+        border-top: 2px dashed #eed7a1;
+        padding-top: 15px;
+      }
+      .history-title {
+        font-weight: bold;
+        color: #8c6239;
+        margin-bottom: 10px;
+        display: block;
+      }
+      .history-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0e6d2;
+      }
+      .weight-highlight {
+        color: #d4a373;
+        font-weight: bold;
+      }
+      .delete-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #ff8e8e;
+        font-size: 0.8rem;
+      }
+      img {
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-right: 8px;
+        border: 2px solid #eed7a1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🐾 푸들 자매 몸무게 기록</h1>
+
+      <div class="dog-section">
+        <div class="dog-name"><img src="hodu.png" alt="호두" /> 호두</div>
+        <div class="current-weight">✨ 목표: 2.3kg 내외</div>
+        <div class="input-group">
+          <input
+            type="number"
+            id="hoduInput"
+            step="0.1"
+            placeholder="몸무게 (kg)"
+          />
+          <button onclick="addRecord('hodu')">기록</button>
+        </div>
+        <div class="history" id="hoduHistory">
+          <span class="history-title">📝 최근 기록:</span>
+        </div>
+      </div>
+
+      <div class="dog-section">
+        <div class="dog-name"><img src="bori.png" alt="보리" /> 보리</div>
+        <div class="current-weight">✨ 목표: 5.3kg 내외</div>
+        <div class="input-group">
+          <input
+            type="number"
+            id="boriInput"
+            step="0.1"
+            placeholder="몸무게 (kg)"
+          />
+          <button onclick="addRecord('bori')">기록</button>
+        </div>
+        <div class="history" id="boriHistory">
+          <span class="history-title">📝 최근 기록:</span>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        addDoc,
+        query,
+        orderBy,
+        onSnapshot,
+        deleteDoc,
+        doc,
+        serverTimestamp,
+      } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+      // 예지님의 파이어베이스 설정값
+      const firebaseConfig = {
+        apiKey: "AIzaSyAY9Urs6njN69lUSO1TXY4SwtbpTFEf0eo",
+        authDomain: "dog-tracker-6fae4.firebaseapp.com",
+        projectId: "dog-tracker-6fae4",
+        storageBucket: "dog-tracker-6fae4.firebasestorage.app",
+        messagingSenderId: "820464958183",
+        appId: "1:820464958183:web:210633dc4432256b2ec042",
+        measurementId: "G-Q8J8GDKWE0",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+
+      // 기록 추가 (DB에 저장)
+      window.addRecord = async function (dog) {
+        const input = document.getElementById(dog + "Input");
+        const weight = input.value;
+        if (!weight) return alert("몸무게를 입력해주세요!");
+
+        try {
+          await addDoc(collection(db, dog + "_records"), {
+            weight: weight,
+            date: new Date().toLocaleDateString(),
+            timestamp: serverTimestamp(),
+          });
+          input.value = "";
+        } catch (e) {
+          console.error(e);
+          alert("저장 실패! 보안 규칙을 확인해주세요.");
+        }
+      };
+
+      // 기록 삭제 (DB에서 삭제)
+      window.deleteRecord = async function (dog, id) {
+        if (confirm("기록을 삭제할까요?")) {
+          await deleteDoc(doc(db, dog + "_records", id));
+        }
+      };
+
+      // 실시간 업데이트 (데이터가 바뀌면 자동으로 화면 갱신)
+      function setupUpdates(dog) {
+        const q = query(
+          collection(db, dog + "_records"),
+          orderBy("timestamp", "desc"),
+        );
+        onSnapshot(q, (snapshot) => {
+          const history = document.getElementById(dog + "History");
+          history.innerHTML =
+            '<span class="history-title">📝 최근 기록:</span>';
+          snapshot.forEach((doc) => {
+            const data = doc.data();
+            const item = document.createElement("div");
+            item.className = "history-item";
+            item.innerHTML = `
+                        <span>📅 ${data.date} <span class="weight-highlight">${data.weight}kg</span></span>
+                        <button class="delete-btn" onclick="deleteRecord('${dog}', '${doc.id}')">❌</button>
+                    `;
+            history.appendChild(item);
+          });
+        });
+      }
+
+      setupUpdates("hodu");
+      setupUpdates("bori");
+    </script>
+  </body>
+</html>
